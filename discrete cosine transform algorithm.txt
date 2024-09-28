@@ -1,0 +1,38 @@
+import cv2
+import numpy as np
+
+# Function to secure the medical image by altering DCT coefficients
+def secure_medical_image_dct(cover_image, medical_image, strength=0.1):
+    # Ensure both images have the same dimensions
+    if cover_image.shape[:2] != medical_image.shape[:2]:
+        raise ValueError("Cover image and medical image must have the same dimensions.")
+
+    # Perform a forward DCT on the cover image
+    dct_cover = cv2.dct(np.float32(cover_image))
+
+    # Perform a forward DCT on the medical image
+    dct_medical = cv2.dct(np.float32(medical_image))
+
+    # Combine DCT coefficients of the cover and medical images
+    modified_dct = dct_cover + strength * dct_medical
+
+    # Perform an inverse DCT to obtain the secured image
+    secured_image = cv2.idct(np.float32(modified_dct))
+
+    # Ensure the secured image has the same data type as the cover image
+    secured_image = secured_image.astype(cover_image.dtype)
+
+    return secured_image
+
+# Load the cover and medical images
+cover_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Cover image/00013.jpg', cv2.IMREAD_GRAYSCALE)
+medical_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Medical image /ID_0009_AGE_0048_CONTRAST_1_CT.jpg', cv2.IMREAD_GRAYSCALE)
+
+# Set the strength parameter to control the amount of security
+strength = 0.1  # Adjust this parameter to control the level of security
+
+# Secure the medical image using DCT steganography
+secured_medical_image = secure_medical_image_dct(cover_image, medical_image, strength)
+
+# Save the secured medical image
+cv2.imwrite('/content/drive/MyDrive/Project/Final/DCT10.jpg', secured_medical_image)

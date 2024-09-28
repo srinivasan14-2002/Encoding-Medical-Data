@@ -1,0 +1,57 @@
+import numpy as np
+import cv2
+
+# Function to perform SVD-based image steganography
+def svd_steganography(cover_image, medical_image, alpha=0.1):
+    # Convert the images to grayscale
+    cover_gray = cv2.cvtColor(cover_image, cv2.COLOR_BGR2GRAY)
+    medical_gray = cv2.cvtColor(medical_image, cv2.COLOR_BGR2GRAY)
+
+    # Perform Singular Value Decomposition (SVD) on both images
+    U_cover, S_cover, V_cover = np.linalg.svd(cover_gray, full_matrices=False)
+    U_medical, S_medical, V_medical = np.linalg.svd(medical_gray, full_matrices=False)
+
+    # Embed medical image into cover image by modifying the singular values
+    S_stego = (1 - alpha) * S_cover + alpha * S_medical
+
+    # Reconstruct the stego image using the modified singular values
+    stego_image = np.dot(U_cover, np.dot(np.diag(S_stego), V_medical))
+
+    # Ensure the stego image has the same data type as the cover image
+    stego_image = stego_image.astype(cover_image.dtype)
+
+    return stego_image
+
+# Function to extract the hidden medical image from a stego image
+def extract_medical_image(stego_image, alpha=0.1):
+    # Convert the stego image to grayscale
+    stego_gray = cv2.cvtColor(stego_image, cv2.COLOR_BGR2GRAY)
+
+    # Perform Singular Value Decomposition (SVD) on the stego image
+    U_stego, S_stego, V_stego = np.linalg.svd(stego_gray, full_matrices=False)
+
+    # Extract the hidden medical image by reversing the embedding process
+    S_medical = (S_stego - (1 - alpha) * S_stego) / alpha
+
+    # Reconstruct the medical image using the modified singular values
+    medical_image = np.dot(U_stego, np.dot(np.diag(S_medical), V_stego))
+
+    # Ensure the medical image has the same data type as the stego image
+    medical_image = medical_image.astype(stego_image.dtype)
+
+    return medical_image
+
+# Load the cover and medical images
+cover_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Cover image/00001.jpg')
+medical_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Medical image/ID_0000_AGE_0060_CONTRAST_1_CT.jpg')
+
+# Set the embedding strength (alpha) to control the trade-off between cover and medical images
+alpha = 0.1
+
+# Embed the medical image into the cover image
+stego_image = svd_steganography(cover_image, medical_image, alpha)
+
+# Save the stego image
+cv2.imwrite('/content/drive/MyDrive/Project/Final/0002.jpg', stego_image)
+
+

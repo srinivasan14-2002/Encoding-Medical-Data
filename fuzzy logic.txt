@@ -1,0 +1,61 @@
+import cv2
+import numpy as np
+
+def encode(cover_image_path, medical_image_path, output_image_path):
+    # Load the cover image and medical image
+    cover_image = cv2.imread(cover_image_path)
+    medical_image = cv2.imread(medical_image_path)
+
+    # Check if the cover image can accommodate the medical image
+    if medical_image.shape[0] > cover_image.shape[0] or medical_image.shape[1] > cover_image.shape[1]:
+        print("Medical image is too large for the cover image.")
+        return
+
+    # Extract the red channel from the cover image
+    cover_red_channel = cover_image[:, :, 2]
+
+    # Embed the medical image in the least significant bits of the red channel
+    for i in range(medical_image.shape[0]):
+        for j in range(medical_image.shape[1]):
+            for k in range(3):  # Iterate through RGB channels
+                cover_red_channel[i, j] = (cover_red_channel[i, j] & 0xFE) | ((medical_image[i, j, k] & 1) & 0x01)
+
+    # Replace the red channel with the modified one
+    cover_image[:, :, 2] = cover_red_channel
+
+    # Save the stego image
+    cv2.imwrite(output_image_path, cover_image)
+    print("Stego image saved as", output_image_path)
+
+def decode(stego_image_path, output_medical_image_path):
+    # Load the stego image
+    stego_image = cv2.imread(stego_image_path)
+
+    # Extract the embedded medical image from the red channel
+    stego_red_channel = stego_image[:, :, 2]
+
+    # Initialize an empty medical image
+    medical_image = np.zeros_like(stego_image)
+
+    # Extract the LSB from the red channel and store it in the medical image
+    for i in range(stego_image.shape[0]):
+        for j in range(stego_image.shape[1]):
+            for k in range(3):  # Iterate through RGB channels
+                medical_image[i, j, k] = (stego_red_channel[i, j] & 1) * 255
+
+    # Save the extracted medical image
+    cv2.imwrite(output_medical_image_path, medical_image)
+    print("Extracted medical image saved as", output_medical_image_path)
+
+if __name__ == "__main":
+    # Define file paths
+    cover_image_path = "cover_image.png"
+    medical_image_path = "medical_image.png"
+    stego_image_path = "stego_image.png"
+    extracted_medical_image_path = "extracted_medical_image.png"
+
+    # Encode the medical image into the cover image
+    encode(cover_image_path, medical_image_path, stego_image_path)
+
+    # Decode the medical image from the stego image
+    decode(stego_image_path, extracted_medical_image_path)

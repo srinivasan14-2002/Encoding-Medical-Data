@@ -1,0 +1,37 @@
+import cv2
+import numpy as np
+import pywt
+
+# Load the medical image and cover image
+medical_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Medical image/ID_0009_AGE_0048_CONTRAST_1_CT.jpg', cv2.IMREAD_GRAYSCALE)
+cover_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Cover image/00011.jpg', cv2.IMREAD_GRAYSCALE)
+
+# Function to hide the medical image within the cover image using wavelet-based steganography
+def hide_image(cover_image, medical_image, strength=0.1):
+    # Discrete Wavelet Transform (DWT) on the cover image
+    coeffs_cover = pywt.wavedec2(cover_image, 'haar', level=1)
+    LL_cover, (LH_cover, HL_cover, HH_cover) = coeffs_cover
+
+    # Discrete Wavelet Transform (DWT) on the medical image
+    coeffs_medical = pywt.wavedec2(medical_image, 'haar', level=1)
+    LL_medical, (LH_medical, HL_medical, HH_medical) = coeffs_medical
+
+    # Hide the medical image in the high-frequency sub-bands of the cover image
+    LH_cover += strength * LH_medical
+    HL_cover += strength * HL_medical
+    HH_cover += strength * HH_medical
+
+    # Reconstruct the secured image
+    coeffs_combined = (LL_cover, (LH_cover, HL_cover, HH_cover))
+    secured_image = pywt.waverec2(coeffs_combined, 'haar')
+
+    return secured_image
+
+# Adjust the strength parameter to control the amount of hiding (0.0 to 1.0)
+strength = 0.1
+
+# Hide the medical image within the cover image
+secured_image = hide_image(cover_image, medical_image, strength)
+
+# Save the secured image
+cv2.imwrite('/content/drive/MyDrive/Project/Final/image10.png', secured_image)

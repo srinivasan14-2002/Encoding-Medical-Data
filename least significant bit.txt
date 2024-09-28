@@ -1,0 +1,43 @@
+import cv2
+import numpy as np
+
+# Function to hide the medical image within the cover image using LSB
+def hide_image(cover_image, medical_image):
+    # Ensure the dimensions of the medical image match the cover image
+    if cover_image.shape[:2] != medical_image.shape[:2]:
+        raise ValueError("The dimensions of the cover image and medical image must be the same.")
+
+    # Create a copy of the cover image to store the secured image
+    secured_image = cover_image.copy()
+
+    # Convert both images to grayscale if not already
+    if len(cover_image.shape) == 3:
+        cover_image = cv2.cvtColor(cover_image, cv2.COLOR_BGR2GRAY)
+    if len(medical_image.shape) == 3:
+        medical_image = cv2.cvtColor(medical_image, cv2.COLOR_BGR2GRAY)
+
+    # Iterate through each pixel in both images
+    for i in range(cover_image.shape[0]):
+        for j in range(cover_image.shape[1]):
+            # Convert the pixel values to binary
+            pixel_cover = format(cover_image[i, j], '08b')
+            pixel_medical = format(medical_image[i, j], '08b')
+
+            # Modify the LSB of the cover image with the medical image pixel's LSB
+            pixel_secured = pixel_cover[:-1] + pixel_medical[-1]
+
+            # Convert the modified pixel back to decimal
+            secured_image[i, j] = int(pixel_secured, 2)
+
+    return secured_image
+
+# Load the cover image and medical image
+cover_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Cover image/00011.jpg')
+medical_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Medical image/ID_0009_AGE_0048_CONTRAST_1_CT.jpg')
+
+# Hide the medical image within the cover image
+secured_image = hide_image(cover_image, medical_image)
+
+# Save the secured image
+cv2.imwrite('/content/drive/MyDrive/Project/Final/lsb9.jpg', secured_image)
+

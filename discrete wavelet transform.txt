@@ -1,0 +1,37 @@
+import cv2
+import numpy as np
+import pywt
+
+# Function to hide the secret image within the cover image using DWT steganography
+def hide_image_dwt(cover_image, secret_image, strength=0.1):
+    # Perform 2D DWT on the cover image
+    LL_c, (LH_c, HL_c, HH_c) = pywt.dwt2(cover_image, 'bior1.3')
+
+    # Perform 2D DWT on the secret image
+    LL_s, (LH_s, HL_s, HH_s) = pywt.dwt2(secret_image, 'bior1.3')
+
+    # Hide the secret image in the high-frequency sub-bands of the cover image
+    LH_c += strength * LH_s
+    HL_c += strength * HL_s
+    HH_c += strength * HH_s
+
+    # Reconstruct the secured image
+    secured_image = pywt.idwt2((LL_c, (LH_c, HL_c, HH_c)), 'bior1.3')
+
+    # Ensure the secured image has the same data type as the cover image
+    secured_image = secured_image.astype(cover_image.dtype)
+
+    return secured_image
+
+# Load the cover and secret images
+cover_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Cover image/00010.jpg', cv2.IMREAD_GRAYSCALE)
+secret_image = cv2.imread('/content/drive/MyDrive/Project/Combined/Medical image /ID_0009_AGE_0048_CONTRAST_1_CT.jpg', cv2.IMREAD_GRAYSCALE)
+
+# Set the embedding strength (alpha) to control the amount of hiding
+alpha = 0.1
+
+# Hide the secret image within the cover image
+secured_image = hide_image_dwt(cover_image, secret_image, alpha)
+
+# Save the secured image
+cv2.imwrite('/content/drive/MyDrive/Project/Final/DWT8.jpg', secured_image)
